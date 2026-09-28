@@ -762,4 +762,12 @@ class DeliveryAutoApi2
         ]);
     }
 
+    public function getSenderList()
+{
+    return $this->request(
+        'Public',
+        'GetSenderList'
+    );
+}
+
 }
