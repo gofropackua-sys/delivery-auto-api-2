@@ -54,6 +54,9 @@ class DeliveryAutoApi2
      */
     protected $lastError = null;
 
+    protected $publicKey = null;
+    protected $secretKey = null;
+
 
     // ==========================================
     // КОНСТРУКТОР
@@ -125,6 +128,27 @@ class DeliveryAutoApi2
         return $this;
     }
 
+
+    // ==========================================
+    // API KEYS / HMAC
+    // ==========================================
+
+    public function setApiKeys($publicKey, $secretKey)
+    {
+        $this->publicKey = trim((string) $publicKey);
+        $this->secretKey = trim((string) $secretKey);
+        return $this;
+    }
+
+    private function getHMACAuthorization()
+    {
+        if (empty($this->publicKey) || empty($this->secretKey)) {
+            throw new \RuntimeException('Delivery API public/secret keys are not specified');
+        }
+        $timestamp = sprintf('%.0f', microtime(true) * 1000);
+        $hash = hash_hmac('sha256', $this->publicKey . $timestamp, $this->secretKey);
+        return 'amx ' . $this->publicKey . ':' . $timestamp . ':' . $hash;
+    }
 
     // ==========================================
     // ОБРАБОТКА ОШИБОК
@@ -225,7 +249,8 @@ class DeliveryAutoApi2
         $model,
         $method,
         $params = null,
-        $post = false
+        $post = false,
+        $authorized = false
     ) {
         $this->lastError = null;
 
@@ -256,6 +281,12 @@ class DeliveryAutoApi2
             );
         }
 
+        $headers = ['Accept: application/json'];
+
+        if ($authorized) {
+            $headers[] = 'HMACAuthorization: ' . $this->getHMACAuthorization();
+        }
+
         $options = [
             CURLOPT_URL => $url,
             CURLOPT_RETURNTRANSFER => true,
@@ -264,9 +295,7 @@ class DeliveryAutoApi2
             CURLOPT_FOLLOWLOCATION => false,
             CURLOPT_SSL_VERIFYPEER => true,
             CURLOPT_SSL_VERIFYHOST => 2,
-            CURLOPT_HTTPHEADER => [
-                'Accept: application/json',
-            ],
+            CURLOPT_HTTPHEADER => $headers,
         ];
 
         if ($post) {
@@ -281,10 +310,8 @@ class DeliveryAutoApi2
 
             $options[CURLOPT_POSTFIELDS] = $json;
 
-            $options[CURLOPT_HTTPHEADER] = [
-                'Accept: application/json',
-                'Content-Type: application/json; charset=utf-8',
-            ];
+            $headers[] = 'Content-Type: application/json; charset=utf-8';
+            $options[CURLOPT_HTTPHEADER] = $headers;
         }
 
         curl_setopt_array($ch, $options);
@@ -763,11 +790,14 @@ class DeliveryAutoApi2
     }
 
     public function getSenderList()
-{
-    return $this->request(
-        'Public',
-        'GetSenderList'
-    );
-}
+    {
+        return $this->request(
+            'Public',
+            'GetSenderList',
+            [],
+            false,
+            true
+        );
+    }
 
 }
