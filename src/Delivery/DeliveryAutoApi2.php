@@ -183,62 +183,72 @@ class DeliveryAutoApi2
     // ОБРАБОТКА ОТВЕТА
     // ==========================================
 
-    private function prepare($response)
-    {
-        $result = json_decode($response, true);
+  private function prepare($response)
+{
+    $result = json_decode($response, true);
 
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            return $this->error(
-                'Invalid JSON: ' . json_last_error_msg()
-            );
-        }
-
-        if (!is_array($result)) {
-            return $this->error(
-                'Invalid API response'
-            );
-        }
-
-        if (
-            isset($result['status']) &&
-            $result['status'] === false
-        ) {
-            $message = $result['message'] ?? 'API error';
-
-            if (!empty($result['errors'])) {
-                $errors = $result['errors'];
-
-                $message = is_array($errors)
-                    ? implode(
-                        "\n",
-                        array_map(
-                            function ($error) {
-                                return is_scalar($error)
-                                    ? (string) $error
-                                    : json_encode(
-                                        $error,
-                                        JSON_UNESCAPED_UNICODE
-                                    );
-                            },
-                            $errors
-                        )
-                    )
-                    : (string) $errors;
-            }
-
-            $this->lastError = $message;
-
-            if ($this->throwErrors) {
-                throw new \RuntimeException($message);
-            }
-        }
-
-        if ($this->format === 'json') {
-            return $response;
-        }
-
-        return $result;
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        return $this->error(
+            'Invalid JSON: ' . json_last_error_msg()
+        );
     }
+
+    if (!is_array($result)) {
+        return $this->error(
+            'Invalid API response'
+        );
+    }
+
+    if (
+        isset($result['status']) &&
+        $result['status'] === false
+    ) {
+        $message = $result['message'] ?? 'API error';
+
+        if (!empty($result['errors'])) {
+            $errors = $result['errors'];
+
+            $message = is_array($errors)
+                ? implode(
+                    "\n",
+                    array_map(
+                        function ($error) {
+                            return is_scalar($error)
+                                ? (string) $error
+                                : json_encode(
+                                    $error,
+                                    JSON_UNESCAPED_UNICODE |
+                                    JSON_UNESCAPED_SLASHES
+                                );
+                        },
+                        $errors
+                    )
+                )
+                : (string) $errors;
+        }
+
+        // Гарантируем строковый тип сообщения
+        if (!is_string($message)) {
+            $message = json_encode(
+                $message,
+                JSON_UNESCAPED_UNICODE |
+                JSON_UNESCAPED_SLASHES
+            );
+        }
+
+        $this->lastError = $message;
+
+        if ($this->throwErrors) {
+            throw new \RuntimeException($message);
+        }
+    }
+
+    if ($this->format === 'json') {
+        return $response;
+    }
+
+    return $result;
+}
 
 
     // ==========================================
