@@ -386,21 +386,22 @@ class DeliveryAutoApi2
         return $this;
     }
 
-    public function execute($post = false)
-    {
-        if (!$this->method) {
-            return $this->error(
-                'API method is not specified'
-            );
-        }
-
-        return $this->request(
-            $this->model,
-            $this->method,
-            $this->params,
-            $post
+public function execute($post = false, $authorized = false)
+{
+    if (!$this->method) {
+        return $this->error(
+            'API method is not specified'
         );
     }
+
+    return $this->request(
+        $this->model,
+        $this->method,
+        $this->params,
+        $post,
+        $authorized
+    );
+}
 
 
     // ==========================================
