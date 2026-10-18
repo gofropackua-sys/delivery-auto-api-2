@@ -346,18 +346,41 @@ if ($post) {
             );
         }
 
-        if ($httpCode < 200 || $httpCode >= 300) {
-            $decoded = json_decode($response, true);
+     if ($httpCode < 200 || $httpCode >= 300) {
 
-            $message = is_array($decoded)
-                ? ($decoded['message'] ?? '')
-                : '';
+    $decoded = json_decode($response, true);
 
-            return $this->error(
-                'HTTP ' . $httpCode .
-                ($message !== '' ? ': ' . $message : '')
+    $message = '';
+
+    if (is_array($decoded)) {
+
+        $message = $decoded['message']
+            ?? $decoded['Message']
+            ?? $decoded['error_description']
+            ?? $decoded['error']
+            ?? '';
+
+        if (!is_scalar($message)) {
+            $message = json_encode(
+                $message,
+                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
             );
         }
+    }
+
+    if ($message === '') {
+        $message = trim((string) $response);
+    }
+
+    error_log('Delivery API URL: ' . $url);
+    error_log('Delivery API HTTP: ' . $httpCode);
+    error_log('Delivery API RESPONSE: ' . $response);
+
+    return $this->error(
+        'HTTP ' . $httpCode .
+        ($message !== '' ? ': ' . mb_substr($message, 0, 1000) : '')
+    );
+}
 
         return $this->prepare($response);
     }
