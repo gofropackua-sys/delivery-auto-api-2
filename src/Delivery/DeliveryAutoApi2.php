@@ -274,7 +274,7 @@ class DeliveryAutoApi2
             . '/'
             . rawurlencode($method);
 
-        if (!$post) {
+        if (!$post || $method === 'PostDeactivateReceipts') {
             $url .= '?' . http_build_query(
                 $params,
                 '',
@@ -307,22 +307,25 @@ class DeliveryAutoApi2
             CURLOPT_SSL_VERIFYHOST => 2,
             CURLOPT_HTTPHEADER => $headers,
         ];
+if ($post) {
 
-        if ($post) {
-            $json = json_encode(
-                $params,
-                JSON_UNESCAPED_UNICODE |
-                JSON_UNESCAPED_SLASHES |
-                JSON_THROW_ON_ERROR
-            );
+    $options[CURLOPT_POST] = true;
 
-            $options[CURLOPT_POST] = true;
+    if ($method !== 'PostDeactivateReceipts') {
 
-            $options[CURLOPT_POSTFIELDS] = $json;
+        $json = json_encode(
+            $params,
+            JSON_UNESCAPED_UNICODE |
+            JSON_UNESCAPED_SLASHES |
+            JSON_THROW_ON_ERROR
+        );
 
-            $headers[] = 'Content-Type: application/json; charset=utf-8';
-            $options[CURLOPT_HTTPHEADER] = $headers;
-        }
+        $options[CURLOPT_POSTFIELDS] = $json;
+
+        $headers[] = 'Content-Type: application/json; charset=utf-8';
+        $options[CURLOPT_HTTPHEADER] = $headers;
+    }
+}
 
         curl_setopt_array($ch, $options);
 
