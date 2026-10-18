@@ -274,14 +274,26 @@ class DeliveryAutoApi2
             . '/'
             . rawurlencode($method);
 
-        if (!$post || $method === 'PostDeactivateReceipts') {
-            $url .= '?' . http_build_query(
-                $params,
-                '',
-                '&',
-                PHP_QUERY_RFC3986
-            );
-        }
+     if ($method === 'PostDeactivateReceipts') {
+
+    $url .= '?' . http_build_query(
+        [
+            'receiptsGuids' => $params['receiptsGuids'] ?? ''
+        ],
+        '',
+        '&',
+        PHP_QUERY_RFC3986
+    );
+
+} elseif (!$post) {
+
+    $url .= '?' . http_build_query(
+        $params,
+        '',
+        '&',
+        PHP_QUERY_RFC3986
+    );
+}
 
         $ch = curl_init();
 
