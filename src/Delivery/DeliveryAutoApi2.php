@@ -316,7 +316,7 @@ if ($post) {
         // UUID уже передан через URL.
         // Явно отправляем пустое тело POST.
         $options[CURLOPT_POSTFIELDS] = '';
-
+        $headers[] = 'Content-Type: application/json; charset=utf-8';
         $headers[] = 'Content-Length: 0';
 
     } else {
