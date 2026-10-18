@@ -311,7 +311,15 @@ if ($post) {
 
     $options[CURLOPT_POST] = true;
 
-    if ($method !== 'PostDeactivateReceipts') {
+    if ($method === 'PostDeactivateReceipts') {
+
+        // UUID уже передан через URL.
+        // Явно отправляем пустое тело POST.
+        $options[CURLOPT_POSTFIELDS] = '';
+
+        $headers[] = 'Content-Length: 0';
+
+    } else {
 
         $json = json_encode(
             $params,
@@ -323,10 +331,10 @@ if ($post) {
         $options[CURLOPT_POSTFIELDS] = $json;
 
         $headers[] = 'Content-Type: application/json; charset=utf-8';
-        $options[CURLOPT_HTTPHEADER] = $headers;
     }
-}
 
+    $options[CURLOPT_HTTPHEADER] = $headers;
+}
         curl_setopt_array($ch, $options);
 
         $response = curl_exec($ch);
